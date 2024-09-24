@@ -116,6 +116,9 @@ class ShipmentDetailWindow:
         self.window = tk.Toplevel(parent)
         self.window.title(f"Shipment {shipment_id} Details")
 
+        # Adjust the window size and position (e.g., 600x400 at position 100x100)
+        self.window.geometry("600x400+100+100")
+
         # Create Tabs
         self.tabControl = ttk.Notebook(self.window)
         self.info_tab = ttk.Frame(self.tabControl)
@@ -124,7 +127,7 @@ class ShipmentDetailWindow:
 
         self.tabControl.add(self.info_tab, text='Info')
         self.tabControl.add(self.arrival_tab, text='Arrival')
-        self.tabControl.add(self.delivery_tab, text='Delivery')
+        self.tabControl.add(self.delivery_tab, text='Delivery') 
         self.tabControl.pack(expand=1, fill="both")
 
         # Load Data into Tabs
