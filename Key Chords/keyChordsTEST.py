@@ -5,7 +5,7 @@ from pydub import AudioSegment  # Still used for handling audio conversions, if 
 import pygame  # New addition for MIDI playback
 import os
 from tkinterdnd2 import TkinterDnD, DND_FILES  # Import TkinterDnD and DND_FILES
-from mido import MidiFile, MidiTrack, Message, MetaMessage  # Import required for MIDI file generation
+from mido import MidiFile, MidiTrack, Message  # Import required for MIDI file generation
 from midi2audio import FluidSynth
 
 
@@ -34,40 +34,33 @@ KEYS = {
                 'Am': [69, 72, 76], 'Bm': [71, 74, 78], 'C': [60, 64, 67], 'D': [62, 66, 69]}
 }
 
-from mido import MidiFile, MidiTrack, Message, MetaMessage
+
 
 def generate_midi_file(progression):
     """Generate a MIDI file for the given chord progression and save it."""
-    midi = MidiFile()
-    track = MidiTrack()
+    midi = MidiFile() #not defined?
+    track = MidiTrack() #not defined?
     midi.tracks.append(track)
-
-    # Set default tempo (500,000 microseconds per beat, equivalent to 120 BPM)
-    track.append(MetaMessage('set_tempo', tempo=500000))
-
-    # Set time signature to 4/4
-    track.append(MetaMessage('time_signature', numerator=4, denominator=4, clocks_per_click=24, notated_32nd_notes_per_beat=8))
-
-    note_interval = note_interval_slider.get()  # Get the interval from the slider
     
+
+    # Get the volume value from the slider
+    volume = volume_slider.get()
+
+
     for chord in progression:
         notes = KEYS[selected_key.get()][chord]
-        # Note On messages
         for note in notes:
-            track.append(Message('note_on', note=note, velocity=64, time=0))
-        # Note Off messages after a set interval
+            track.append(Message('note_on', note=note, velocity=volume, time=0))
         for note in notes:
-            track.append(Message('note_off', note=note, velocity=64, time=note_interval))
+            track.append(Message('note_off', note=note, velocity=volume, time=480))
     
     # Save with sequential numbering
     existing_files = os.listdir(PROGRESSIONS_FOLDER)
-    next_number = len(existing_files) + 1 
-
+    next_number = len(existing_files) + 1
     filename = f"{PROGRESSIONS_FOLDER}/chord_progression_{next_number}.mid"
     midi.save(filename)
     update_progression_list()
     print(f"MIDI file '{filename}' downloaded successfully!")
-
 
 def update_progression_list():
     """Update the list of saved chord progressions."""
@@ -109,15 +102,18 @@ def delete_selected_progression():
         update_progression_list()
         print(f"Deleted '{selected}'.")
 
+
 def play_selected_progression():
     """Play the selected MIDI file using FluidSynth."""
     selected = progression_listbox.get(tk.ACTIVE)
     if selected:
         midi_path = os.path.abspath(os.path.join(PROGRESSIONS_FOLDER, selected))
 
+        # Debug prints
         print(f"Selected MIDI file: {midi_path}")
         print(f"SoundFont path: {SOUNDFONT_PATH}")
 
+        # Ensure MIDI file and SoundFont file exist
         if not os.path.exists(midi_path):
             print(f"Error: MIDI file '{midi_path}' not found.")
             return
@@ -127,9 +123,9 @@ def play_selected_progression():
             return
         
         try:
-            # Initialize FluidSynth without output_device
+            # Initialize FluidSynth once
             if not hasattr(play_selected_progression, "fs"):
-                play_selected_progression.fs = FluidSynth(SOUNDFONT_PATH)
+                play_selected_progression.fs = FluidSynth(sound_font=SOUNDFONT_PATH, sample_rate=22050)
                 print("FluidSynth initialized successfully.")
             
             # Load and play the MIDI file using FluidSynth
@@ -224,6 +220,17 @@ download_button.grid(row=0, column=1, padx=10)
 progression_listbox = tk.Listbox(frame_right, height=10, bg="#444444", fg="white", font=("Arial", 12), selectbackground="#555555")
 progression_listbox.pack(pady=10, fill=tk.BOTH, expand=True)
 update_progression_list()
+
+
+
+volume_label = tk.Label(frame_left, text="Volume:", bg="#333333", fg="white", font=("Arial", 12))
+volume_label.pack(pady=(10, 0))
+
+volume_slider = tk.Scale(frame_left, from_=0, to=127, orient=tk.HORIZONTAL, bg="#555555", fg="white", font=("Arial", 12), troughcolor="#444444", highlightthickness=0)
+
+volume_slider.set(64)  # Default volume
+volume_slider.pack(pady=5)
+
 
 # Delete and Play buttons
 action_button_frame = tk.Frame(frame_right, bg="#333333")
